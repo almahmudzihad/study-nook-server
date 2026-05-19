@@ -63,18 +63,18 @@ async function run() {
                 });
             }
         });
-        app.get("/my-bookings/:email", async (req, res) => {
+        app.get("/my-rooms/:email", async (req, res) => {
             try {
                 const email = req.params.email;
 
                 const bookings = await db.collection("rooms")
-                        .find({
-                            ownerEmail: email,
-                        })
-                        .sort({
-                            createdAt: -1,
-                        })
-                        .toArray();
+                    .find({
+                        ownerEmail: email,
+                    })
+                    .sort({
+                        createdAt: -1,
+                    })
+                    .toArray();
 
                 res.send(bookings);
             } catch (error) {
@@ -85,6 +85,69 @@ async function run() {
             }
         }
         );
+        app.post("/bookings", async (req, res) => {
+            const bookingsCollection = db.collection("bookings");
+            try {
+                const booking = req.body;
+
+                const {
+                    roomId,
+                    date,
+                    startTime,
+                    endTime,
+                } = booking;
+
+                // conflict check
+                const existingBooking =
+                    await bookingsCollection.findOne({
+                        roomId,
+                        date,
+                        status: "confirmed",
+
+                        $or: [
+                            {
+                                startTime: {
+                                    $lt: endTime,
+                                },
+
+                                endTime: {
+                                    $gt: startTime,
+                                },
+                            },
+                        ],
+                    });
+
+                if (existingBooking) {
+                    return res.status(400).send({
+                        success: false,
+                        message:
+                            "Time slot already booked",
+                    });
+                }
+
+                const result =
+                    await bookingsCollection.insertOne({
+                        ...booking,
+                        status: "confirmed",
+                        createdAt: new Date(),
+                    });
+
+                res.send({
+                    success: true,
+                    insertedId:
+                        result.insertedId,
+                    message:
+                        "Room booked successfully",
+                });
+            } catch (error) {
+                console.log(error);
+
+                res.status(500).send({
+                    success: false,
+                    message: error.message,
+                });
+            }
+        });
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
