@@ -207,6 +207,24 @@ async function run() {
                 }
             }
         );
+        app.get("/latest-rooms", async (req, res) => {
+            try {
+                const result = await db
+                    .collection("rooms")
+                    .find()
+                    .sort({ _id: -1 })
+                    .limit(6)
+                    .toArray();
+
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({
+                    message:
+                        "Failed to fetch latest rooms",
+                });
+            }
+        });
+
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     } finally {
