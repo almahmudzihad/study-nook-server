@@ -2,7 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const app = express();
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 dotenv.config();
 
@@ -63,6 +63,28 @@ async function run() {
                 });
             }
         });
+        app.get("/my-bookings/:email", async (req, res) => {
+            try {
+                const email = req.params.email;
+
+                const bookings = await db.collection("rooms")
+                        .find({
+                            ownerEmail: email,
+                        })
+                        .sort({
+                            createdAt: -1,
+                        })
+                        .toArray();
+
+                res.send(bookings);
+            } catch (error) {
+                res.status(500).send({
+                    message:
+                        error.message,
+                });
+            }
+        }
+        );
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
