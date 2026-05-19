@@ -23,6 +23,7 @@ async function run() {
     try {
         await client.connect();
         const db = client.db("studynook");
+        const bookingsCollection = db.collection("bookings");
 
 
         app.post("/rooms", async (req, res) => {
@@ -86,7 +87,6 @@ async function run() {
         }
         );
         app.post("/bookings", async (req, res) => {
-            const bookingsCollection = db.collection("bookings");
             try {
                 const booking = req.body;
 
@@ -148,6 +148,31 @@ async function run() {
                 });
             }
         });
+        app.get("/my-bookings/:email",
+            async (req, res) => {
+                try {
+                    const email =
+                        req.params.email;
+
+                    const bookings =
+                        await bookingsCollection
+                            .find({
+                                bookingEmail: email,
+                            })
+                            .sort({
+                                createdAt: -1,
+                            })
+                            .toArray();
+
+                    res.send(bookings);
+                } catch (error) {
+                    res.status(500).send({
+                        message:
+                            error.message,
+                    });
+                }
+            }
+        );
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
