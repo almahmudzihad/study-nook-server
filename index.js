@@ -173,7 +173,40 @@ async function run() {
                 }
             }
         );
+        app.patch("/bookings/:id/cancel",
+            async (req, res) => {
+                try {
+                    const id =
+                        req.params.id;
 
+                    const result =
+                        await bookingsCollection.updateOne(
+                            {
+                                _id:
+                                    new ObjectId(id),
+                            },
+                            {
+                                $set: {
+                                    status:
+                                        "cancelled",
+                                },
+                            }
+                        );
+
+                    res.send({
+                        success: true,
+                        message:
+                            "Booking cancelled",
+                        result,
+                    });
+                } catch (error) {
+                    res.status(500).send({
+                        message:
+                            error.message,
+                    });
+                }
+            }
+        );
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     } finally {
