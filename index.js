@@ -56,19 +56,75 @@ async function run() {
         });
 
         app.get("/rooms", async (req, res) => {
-            try {
-                const rooms = await db
-                    .collection("rooms")
-                    .find()
-                    .sort({ createdAt: -1 })
-                    .toArray();
+        try {
+            const {
+            search,
+            amenities,
+            minPrice,
+            maxPrice,
+            minFloor,
+            maxFloor,
+            } = req.query;
 
-                res.send(rooms);
-            } catch (error) {
-                res.status(500).send({
-                    message: error.message,
-                });
+            const query = {};
+
+            // Search by room name
+            if (search) {
+            query.roomName = {
+                $regex: search,
+                $options: "i",
+            };
             }
+
+            // Amenities filter
+            if (amenities) {
+            query.amenities = {
+                $in: amenities.split(","),
+            };
+            }
+
+            // Hourly rate filter
+            if (minPrice || maxPrice) {
+            query.hourlyRate = {};
+
+            if (minPrice) {
+                query.hourlyRate.$gte =
+                Number(minPrice);
+            }
+
+            if (maxPrice) {
+                query.hourlyRate.$lte =
+                Number(maxPrice);
+            }
+            }
+
+            // Floor filter
+            if (minFloor || maxFloor) {
+            query.floor = {};
+
+            if (minFloor) {
+                query.floor.$gte =
+                Number(minFloor);
+            }
+
+            if (maxFloor) {
+                query.floor.$lte =
+                Number(maxFloor);
+            }
+            }
+
+            const rooms = await db
+            .collection("rooms")
+            .find(query)
+            .sort({ createdAt: -1 })
+            .toArray();
+
+            res.send(rooms);
+        } catch (error) {
+            res.status(500).send({
+            message: error.message,
+            });
+        }
         });
         app.get("/rooms/:id", async (req, res) => {
             try {
