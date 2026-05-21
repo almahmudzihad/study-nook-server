@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const app = express();
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 
 dotenv.config();
 
@@ -18,6 +19,26 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+const JWKS = createRemoteJWKSet(new URL(`${process.env.CLIENT_URI}/api/auth/jwks`));
+const verifyToken = async (req, res, next) => {
+    const authheader = req?.headers.authorization;
+    if (!authheader) {
+        return res.status(401).send({ message: 'unauthorized access' });
+    }
+    const token = authheader.split(' ')[1];
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorized access' });
+    }
+    
+    try {
+        const { payload } = await jwtVerify(token, JWKS);
+        
+        next();
+    } catch (error) {
+        return res.status(401).send({ message: 'unauthorized access user' });
+    }
+    
+}
 
 async function run() {
     try {
@@ -26,7 +47,7 @@ async function run() {
         const bookingsCollection = db.collection("bookings");
 
 
-        app.post("/rooms", async (req, res) => {
+        app.post("/rooms", verifyToken, async (req, res) => {
             const room = req.body;
 
             const result = await db.collection("rooms").insertOne(room);
