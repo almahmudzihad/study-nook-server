@@ -64,6 +64,45 @@ async function run() {
                 });
             }
         });
+        app.delete("/rooms/:id", async (req, res) => {
+            const id = req.params.id;
+
+            const query = {
+                _id: new ObjectId(id),
+            };
+
+            const result = await db
+                .collection("rooms")
+                .deleteOne(query);
+
+            res.send(result);
+        });
+        app.put("/rooms/:id", async (req, res) => {
+        const id = req.params.id;
+        const updatedData = req.body;
+
+        const query = {
+            _id: new ObjectId(id),
+        };
+
+        const updateDoc = {
+            $set: {
+            roomName: updatedData.roomName,
+            description: updatedData.description,
+            image: updatedData.image,
+            floor: updatedData.floor,
+            capacity: Number(updatedData.capacity),
+            hourlyRate: Number(updatedData.hourlyRate),
+            amenities: updatedData.amenities,
+            },
+        };
+
+        const result = await db
+            .collection("rooms")
+            .updateOne(query, updateDoc);
+
+        res.send(result);
+        });
         app.get("/my-rooms/:email", async (req, res) => {
             try {
                 const email = req.params.email;
