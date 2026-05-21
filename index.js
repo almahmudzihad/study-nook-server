@@ -85,7 +85,7 @@ async function run() {
                 });
             }
         });
-        app.delete("/rooms/:id", async (req, res) => {
+        app.delete("/rooms/:id", verifyToken, async (req, res) => {
             const id = req.params.id;
 
             const query = {
@@ -208,8 +208,7 @@ async function run() {
                 });
             }
         });
-        app.get("/my-bookings/:email",
-            async (req, res) => {
+        app.get("/my-bookings/:email", async (req, res) => {
                 try {
                     const email =
                         req.params.email;
@@ -233,8 +232,7 @@ async function run() {
                 }
             }
         );
-        app.patch("/bookings/:id/cancel",
-            async (req, res) => {
+        app.patch("/bookings/:id/cancel", verifyToken, async (req, res) => {
                 try {
                     const id =
                         req.params.id;
